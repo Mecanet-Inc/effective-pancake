@@ -119,6 +119,7 @@ public class Program implements Runnable {
                 if (method.equals("GET")) { // GET method so we return content
                     byte[] fileData = readFileData(file, fileLength);
 
+
                     // send HTTP Headers
                     out.println("HTTP/1.1 200 OK");
                     out.println("Server: Java HTTP Server from SSaurel : 1.0");
@@ -184,6 +185,8 @@ public class Program implements Runnable {
     private String getContentType(String fileRequested) {
         if (fileRequested.endsWith(".htm") || fileRequested.endsWith(".html"))
             return "text/html";
+        else if(fileRequested.endsWith(".css"))
+            return "text/css";
         else
             return "text/plain";
     }
