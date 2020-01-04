@@ -11,8 +11,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Date;
-import java.util.StringTokenizer;
+import java.util.*;
 
 
 public class Program implements Runnable {
@@ -73,8 +72,20 @@ public class Program implements Runnable {
             // get binary output stream to client (for requested data)
             dataOut = new BufferedOutputStream(connect.getOutputStream());
 
+            String firstLine = in.readLine();
+            String line = firstLine;
+            System.out.println(line);
+            while((line = in.readLine()) != null) {
+                if (line.isEmpty()) {
+                    break;
+                }
+                //System.out.println(line);
+            }
+
+            System.out.println("Printed the file");
+
             // get first line of the request from the client
-            String input = in.readLine();
+            String input = firstLine;
             // we parse the request with a string tokenizer
             StringTokenizer parse = new StringTokenizer(input);
             String method = parse.nextToken().toUpperCase(); // we get the HTTP method of the client
@@ -108,9 +119,33 @@ public class Program implements Runnable {
 
             } else {
                 // GET or HEAD method
+
+                String[] parameters = fileRequested.split("[?]", 2);
+                String requestedFile = parameters[0];
+                String inputValues = new String();
+
+                for(int i = 1; i < parameters.length; i++)
+                    inputValues += parameters[i];
+
+                System.out.println("Requested file: " + requestedFile);
+                System.out.println("Variables: " + inputValues);
+                if(!inputValues.isEmpty()) {
+                    Map<String, String> variables = new HashMap<>();
+                    String[] inputVariables = inputValues.split("&");
+                    for(int i = 0; i < inputVariables.length; i++) {
+                        String name = inputVariables[i].split("=")[0];
+                        String value = inputVariables[i].split("=")[1];
+                        variables.put(name, value);
+
+                        System.out.println(variables.get(name));
+                    }
+                }
+
+                fileRequested = requestedFile;
                 if (fileRequested.endsWith("/")) {
                     fileRequested += DEFAULT_FILE;
                 }
+                System.out.println("Requesting file: " + requestedFile);
 
                 File file = new File(WEB_ROOT, fileRequested);
                 int fileLength = (int) file.length();
@@ -118,7 +153,6 @@ public class Program implements Runnable {
 
                 if (method.equals("GET")) { // GET method so we return content
                     byte[] fileData = readFileData(file, fileLength);
-
 
                     // send HTTP Headers
                     out.println("HTTP/1.1 200 OK");
@@ -132,7 +166,6 @@ public class Program implements Runnable {
                     dataOut.write(fileData, 0, fileLength);
                     dataOut.flush();
                 }
-
                 if (verbose) {
                     System.out.println("File " + fileRequested + " of type " + content + " returned");
                 }
@@ -187,6 +220,8 @@ public class Program implements Runnable {
             return "text/html";
         else if(fileRequested.endsWith(".css"))
             return "text/css";
+        else if(fileRequested.endsWith(".js"))
+            return "text/script";
         else
             return "text/plain";
     }
